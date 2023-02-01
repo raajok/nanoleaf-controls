@@ -1,25 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
 
-function App() {
+const App = () => {
+
+  const handleFindDevices = () => {
+    // Nanoleaf devices are returned in an array, like so:
+    // { name: , ip: , mac: }
+    window.nanoleafAPI.findDevices().then(devices => {
+      console.log(devices);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      {"Nanoleaf Controls"}
+      <button onClick={handleFindDevices}>Find Nanoleaf Devices</button>
     </div>
-  );
-}
+    
+  )
+};
 
 export default App;

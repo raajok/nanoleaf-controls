@@ -1,27 +1,83 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 
-function createWindow () {
-  const windowOne = new BrowserWindow({
-    maxWidth: 1000,
-    maxHeight: 1000,
-    backgroundColor: '#7B435B',
+const path = require('path');
+const Store = require('electron-store');
+const find = require('local-devices');
+const axios = require('axios');
+
+/*
+  Function for finding Nanoleaf devices in the same network
+  Searches trough all devices with local-devices module and tests if Nanoleaf API is available
+
+  The function is slow, because it waits for a response from non-nanoleaf devices for 1-2 seconds.
+  In a bigger network this is unusable.
+*/
+async function handleFindDevices() {
+  const devices = await find();
+  let promises = [];
+  devices.forEach((device) => {
+    promises.push(axios.post('http://' + device.ip + ':16021/api/v1/new')
+      .then((response) => {
+        // If the POST request returns OK 200, the user had pressed 
+        // the start button for 3-7 seconds before running the app.
+        console.log(device);
+        return device;
+      })
+      .catch((error) => {
+        // If there is an error response, the IP is for a Nanoleaf-device. Otherwise the device did not get the request.
+        if (error.response) {
+          console.log(device);
+          return device;
+        } else if (error.request) {
+          // if no response was received
+          console.log("request" + device);
+          return null;
+        }
+      }));
   });
-  windowOne.removeMenu();
-  // load HTML file via url
-  windowOne.loadURL('https://www.electronjs.org/');
-  const windowTwo = new BrowserWindow();
-  // load HTML file locally
-  windowTwo.loadFile('public/index.html');
+
+  return new Promise((resolve, reject) => {
+    Promise.all(promises)
+      .then((results) => {
+        let nanoleafDevices = [];
+        results.forEach((device) => {
+          // device is null if the device didn't have api/v1/new endpoint
+          if (device !== null) {
+            nanoleafDevices.push(device);
+          }
+        })
+        console.log("Valmis!");
+        resolve(nanoleafDevices);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+    });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(createWindow)
+function createWindow () {
+  window = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+  window.removeMenu();
+  
+  //loading the index.html running at localhost
+  window.loadURL('http://localhost:3000');
+
+  window.webContents.openDevTools();
+}
+
+app.whenReady().then(() => {
+  ipcMain.handle('findDevices', handleFindDevices);
+  createWindow();
+});
+
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
@@ -37,5 +93,7 @@ app.on('activate', () => {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+// Use electron-store to create and access user settings
+const store = new Store();
+
+store.set('userSettings.theme', 'light');
