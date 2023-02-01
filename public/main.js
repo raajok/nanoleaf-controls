@@ -16,8 +16,12 @@ async function handleFindDevices() {
   const devices = await find();
   let promises = [];
   devices.forEach((device) => {
-    promises.push(axios.post('http://' + device.ip + ':16021/api/v1/new')
-      .then((response) => {
+    promises.push(axios({
+      method: 'post',
+      url: 'http://' + device.ip + ':16021/api/v1/new',
+      timeout: 200 // if there is no response in 0.2 seconds, abort request
+    })
+    .then((response) => {
         // If the POST request returns OK 200, the user had pressed 
         // the start button for 3-7 seconds before running the app.
         console.log(device);
