@@ -9,8 +9,8 @@ const axios = require('axios');
   Function for finding Nanoleaf devices in the same network
   Searches trough all devices with local-devices module and tests if Nanoleaf API is available
 
-  The function is slow, because it waits for a response from non-nanoleaf devices for 1-2 seconds.
-  In a bigger network this is unusable.
+  The function is somewhat slow, because if the device is not Nanoleaf, it waits for a a response or a timeout for 0.2 seconds.
+  In a bigger network this might be slow.
 */
 async function handleFindDevices() {
   const devices = await find();

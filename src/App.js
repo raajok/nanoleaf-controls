@@ -3,9 +3,10 @@ import Devices from './components/Devices';
 
 const App = () => {
 
+  const [connectedIp, setConnectedIp] = React.useState("");
 
   return (
-    <Devices />
+    <Devices setConnectedIp={setConnectedIp} />
   )
 };
 
