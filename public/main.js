@@ -4,13 +4,11 @@ const path = require('path');
 const Store = require('electron-store');
 const find = require('local-devices');
 const axios = require('axios');
+const { resolve } = require('path');
 
 /*
   Function for finding Nanoleaf devices in the same network
   Searches trough all devices with local-devices module and tests if Nanoleaf API is available
-
-  The function is somewhat slow, because if the device is not Nanoleaf, it waits for a a response or a timeout for 0.2 seconds.
-  In a bigger network this might be slow.
 */
 async function handleFindDevices() {
   const devices = await find();
@@ -24,22 +22,19 @@ async function handleFindDevices() {
     .then((response) => {
         // If the POST request returns OK 200, the user had pressed 
         // the start button for 3-7 seconds before running the app.
-        console.log(device);
         return device;
       })
       .catch((error) => {
         // If there is an error response, the IP is for a Nanoleaf-device. Otherwise the device did not get the request.
         if (error.response) {
-          console.log(device);
           return device;
         } else if (error.request) {
           // if no response was received
-          console.log("request" + device);
           return null;
         }
       }));
   });
-
+  
   return new Promise((resolve, reject) => {
     Promise.all(promises)
       .then((results) => {
@@ -50,13 +45,25 @@ async function handleFindDevices() {
             nanoleafDevices.push(device);
           }
         })
-        console.log("Valmis!");
         resolve(nanoleafDevices);
       })
       .catch((error) => {
         reject(error);
       });
     });
+}
+
+// Getting the authentication token for a Nanoleaf device
+async function handleAuthenticationToken(event, ip) {
+  return new Promise((resolve, reject) => {
+    axios.post('http://' + ip + ':16021/api/v1/new')
+    .then((response) => {
+      resolve(response.data.auth_token);
+    }).catch((error) => {
+      console.log(error.message);
+      reject(error);
+    });
+  });
 }
 
 function createWindow () {
@@ -78,6 +85,7 @@ function createWindow () {
 
 app.whenReady().then(() => {
   ipcMain.handle('findDevices', handleFindDevices);
+  ipcMain.handle('authenticationToken', handleAuthenticationToken);
   createWindow();
 });
 
