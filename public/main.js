@@ -2,68 +2,31 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 
 const path = require('path');
 const Store = require('electron-store');
-const find = require('local-devices');
 const axios = require('axios');
-const { resolve } = require('path');
 
-/*
-  Function for finding Nanoleaf devices in the same network
-  Searches trough all devices with local-devices module and tests if Nanoleaf API is available
-*/
-async function handleFindDevices() {
-  const devices = await find();
-  let promises = [];
-  devices.forEach((device) => {
-    promises.push(axios({
-      method: 'post',
-      url: 'http://' + device.ip + ':16021/api/v1/new',
-      timeout: 200 // if there is no response in 0.2 seconds, abort request
-    })
-    .then((response) => {
-        // If the POST request returns OK 200, the user had pressed 
-        // the start button for 3-7 seconds before running the app.
-        return device;
-      })
-      .catch((error) => {
-        // If there is an error response, the IP is for a Nanoleaf-device. Otherwise the device did not get the request.
-        if (error.response) {
-          return device;
-        } else if (error.request) {
-          // if no response was received
-          return null;
-        }
-      }));
-  });
-  
-  return new Promise((resolve, reject) => {
-    Promise.all(promises)
-      .then((results) => {
-        let nanoleafDevices = [];
-        results.forEach((device) => {
-          // device is null if the device didn't have api/v1/new endpoint
-          if (device !== null) {
-            nanoleafDevices.push(device);
-          }
-        })
-        resolve(nanoleafDevices);
-      })
-      .catch((error) => {
-        reject(error);
-      });
-    });
-}
+const nanoleafAPI = require('./nanoleafApi');
 
-// Getting the authentication token for a Nanoleaf device
-async function handleAuthenticationToken(event, ip) {
-  return new Promise((resolve, reject) => {
-    axios.post('http://' + ip + ':16021/api/v1/new')
-    .then((response) => {
-      resolve(response.data.auth_token);
-    }).catch((error) => {
+function handleWeatherEffect(event, ip, token, city) {
+  // Get weather information of the city from nanoleaf-controls-api server
+  axios.get(`http://localhost:3001/weatherapi/${city}`)
+    .then(result => {
+      console.log(result.data);
+
+      let temperature = result.data.main.temp;
+      let windSpeed = result.data.wind.speed;
+      // Might be undefined as the API does not include these if it is not raining/snowing
+      let rainVolume = typeof result.data.rain === "undefined" ? result.data.rain : 0;
+      let snowVolume = typeof result.data.snow === "undefined" ? result.data.snow : 0;
+
+      nanoleafAPI.setWeatherEffect(ip, token, temperature, windSpeed, rainVolume, snowVolume)
+        .then(response => {
+          console.log(response);
+        }).catch(error => {
+          console.log(error);
+        });
+    }).catch(error => {
       console.log(error.message);
-      reject(error);
     });
-  });
 }
 
 function createWindow () {
@@ -84,8 +47,9 @@ function createWindow () {
 }
 
 app.whenReady().then(() => {
-  ipcMain.handle('findDevices', handleFindDevices);
-  ipcMain.handle('authenticationToken', handleAuthenticationToken);
+  ipcMain.handle('findDevices', nanoleafAPI.handleFindDevices);
+  ipcMain.handle('authenticationToken', nanoleafAPI.handleAuthenticationToken);
+  ipcMain.handle('weatherEffect', handleWeatherEffect);
   createWindow();
 });
 
