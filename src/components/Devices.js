@@ -47,12 +47,14 @@ const Devices = ( { connectedIp, setConnectedIp } ) => {
     e.preventDefault();
 
     // get authentication token with NanoleafAPI
-    window.nanoleafAPI.authenticationToken(selectedDeviceIp).then(token => {
-      setConnectedIp(selectedDeviceIp);
-      setConnectedDevices([...connectedDevices, selectedDeviceIp]);
-    }).catch(error => {
-      console.log(error);
-    });
+    if (!connectedDevices.includes(selectedDeviceIp)) {
+      window.nanoleafAPI.authenticationToken(selectedDeviceIp).then(token => {
+        setConnectedIp(selectedDeviceIp);
+        setConnectedDevices([...connectedDevices, selectedDeviceIp]);
+      }).catch(error => {
+        console.log(error);
+      });
+    }
   };
 
   return (
