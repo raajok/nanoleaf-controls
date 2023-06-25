@@ -1,26 +1,45 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-const Devices = ( { setConnectedIp, setAuthenticationToken } ) => {
+const Devices = ( { connectedIp, setConnectedIp } ) => {
 
   const [nanoleafDevices, setNanoleafDevices] = React.useState([]);
+  const [connectedDevices, setConnectedDevices] = React.useState([]);
   const [selectedDeviceIp, setSelectedDeviceIp] = React.useState("");
+
+  useEffect(() => {
+    setSelectedDeviceIp(connectedIp);
+
+    window.nanoleafAPI.getTokens().then(tokens => {
+
+      // add all already connected IPs to nanoleafDevices array
+      let connected = [];
+      for (const key in tokens) {
+        connected = [...connected, key];
+      }
+      setNanoleafDevices(connected);
+      setConnectedDevices(connected);
+    });
+  }, []);
 
   const handleFindDevices = (e) => {
     e.preventDefault();
 
-    // Nanoleaf devices are returned in an array, like so:
-    // { name: , ip: , mac: }
+    // Nanoleaf devices are returned in an array with IPs
     window.nanoleafAPI.findDevices().then(devices => {
       setNanoleafDevices(devices);
     })
     .catch((error) => {
       console.log(error);
-    })
+    });
   };
 
   const handleChange = (ip, event) => {
     if (event.target.checked) {
       setSelectedDeviceIp(ip);
+
+      if (connectedDevices.includes(ip)) {
+        setConnectedIp(ip);
+      }
     }
   };
 
@@ -29,8 +48,8 @@ const Devices = ( { setConnectedIp, setAuthenticationToken } ) => {
 
     // get authentication token with NanoleafAPI
     window.nanoleafAPI.authenticationToken(selectedDeviceIp).then(token => {
-      setAuthenticationToken(token);
       setConnectedIp(selectedDeviceIp);
+      setConnectedDevices([...connectedDevices, selectedDeviceIp]);
     }).catch(error => {
       console.log(error);
     });
@@ -40,11 +59,11 @@ const Devices = ( { setConnectedIp, setAuthenticationToken } ) => {
     <div>
       <form onSubmit={handleSubmit}>
         <div>
-          {nanoleafDevices.map((device, i) => {
+          {nanoleafDevices.map((ip, i) => {
             return (
             <div key={i}>
-              <input type="radio" name="devices" value={device.name} onChange={(event) => handleChange(device.ip, event)} />
-              <label>{device.name}</label>
+              <input type="radio" name="devices" value={ip} onChange={(event) => handleChange(ip, event)} checked={selectedDeviceIp === ip} />
+              <label>{ip}</label>
             </div>
             )
           })}

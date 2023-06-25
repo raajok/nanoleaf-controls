@@ -1,13 +1,13 @@
 import React from 'react';
 
-const Weather = ({ connectedIp, authenticationToken }) => {
+const Weather = ({ connectedIp }) => {
 
   const [city, setCity] = React.useState('');
 
   const handleWeather = (e) => {
     e.preventDefault();
     
-    window.nanoleafAPI.setWeatherEffect(connectedIp, authenticationToken, city);
+    window.nanoleafAPI.setWeatherEffect(connectedIp, city);
   };
   
   return (

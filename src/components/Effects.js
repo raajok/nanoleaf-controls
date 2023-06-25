@@ -8,8 +8,8 @@ const Effects = () => {
 
   return (
     <div>
-      <p>{location.state?.connectedIp + " " + location.state?.authenticationToken}</p>
-      <Weather connectedIp={location.state?.connectedIp} authenticationToken={location.state?.authenticationToken} />
+      <p>{location.state?.connectedIp}</p>
+      <Weather connectedIp={location.state?.connectedIp} />
     </div>
   )
 };

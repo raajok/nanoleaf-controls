@@ -5,5 +5,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('nanoleafAPI', {
   findDevices: () => ipcRenderer.invoke('findDevices'),
   authenticationToken: (ip) => ipcRenderer.invoke('authenticationToken', ip),
-  setWeatherEffect: (ip, token, city) => ipcRenderer.invoke('weatherEffect', ip, token, city)
+  getTokens: () => ipcRenderer.invoke('getTokens'),
+  setWeatherEffect: (ip, city) => ipcRenderer.invoke('weatherEffect', ip, city)
 });

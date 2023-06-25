@@ -1,7 +1,14 @@
 const axios = require('axios');
 const find = require('local-devices');
+const Store = require('electron-store');
+
+// Set electron-store to not use dot notation, so IP-addresses are usable
+const store = new Store({accessPropertiesByDotNotation: false});
+
+const NANOLEAF_DEFAULT_PORT = 16021;
 
 const nanoleafAPI = {
+
   /*
   Function for finding Nanoleaf devices in the same network
   Searches through all devices with local-devices module and tests if Nanoleaf API is available
@@ -12,7 +19,7 @@ const nanoleafAPI = {
     devices.forEach((device) => {
       promises.push(axios({
         method: 'post',
-        url: 'http://' + device.ip + ':16021/api/v1/new',
+        url: 'http://' + device.ip + `:${NANOLEAF_DEFAULT_PORT}/api/v1/new`,
         timeout: 200 // if there is no response in 0.2 seconds, abort request
       })
       .then((response) => {
@@ -23,7 +30,6 @@ const nanoleafAPI = {
         .catch((error) => {
           // If there is an error response, the IP is for a Nanoleaf-device. Otherwise the device did not get the request.
           if (error.response) {
-            console.log(device.ip);
             return device;
           } else if (error.request) {
             // if no response was received
@@ -39,7 +45,7 @@ const nanoleafAPI = {
           results.forEach((device) => {
             // device is null if the device didn't have api/v1/new endpoint
             if (device !== null) {
-              nanoleafDevices.push(device);
+              nanoleafDevices.push(device.ip);
             }
           })
           resolve(nanoleafDevices);
@@ -53,8 +59,9 @@ const nanoleafAPI = {
   // Getting the authentication token for a Nanoleaf device
   handleAuthenticationToken: async function handleAuthenticationToken(event, ip) {
     return new Promise((resolve, reject) => {
-      axios.post('http://' + ip + ':16021/api/v1/new')
+      axios.post('http://' + ip + `:${NANOLEAF_DEFAULT_PORT}/api/v1/new`)
       .then((response) => {
+        store.set(ip, response.data.auth_token);
         resolve(response.data.auth_token);
       }).catch((error) => {
         console.log(error.message);
@@ -63,10 +70,23 @@ const nanoleafAPI = {
     });
   },
 
+  /* Return all tokens in store in JSON.
+    {
+      'ip': 'token',
+      'ip2': 'token2'
+    }
+  */
+  handleGetTokens: async function handleGetTokens() {
+    return store.store; // returns whole store as an object
+  },
+
   // Set the weather effect with given temperature, wind speed and rain/snow volume
-  setWeatherEffect: async function setWeatherEffect(ip, token, temperature, windSpeed, rainVolume, snowVolume) {
+  setWeatherEffect: async function setWeatherEffect(ip, temperature, windSpeed, rainVolume, snowVolume) {
     console.log("ip: " + ip);
     console.log("token: " + token);
+
+    const token = store.get(ip);
+    
     /*
       Color codes for temperature in HSB:
       30+: 0, 100, 71
@@ -154,7 +174,7 @@ const nanoleafAPI = {
     return new Promise((resolve, reject) => {
       axios({
         method: 'put',
-        url: `http://${ip}:16021/api/v1/${token}/effects`,
+        url: `http://${ip}:${NANOLEAF_DEFAULT_PORT}/api/v1/${token}/effects`,
         timeout: 30000,
         data: {
           "write": {
