@@ -80,6 +80,23 @@ const nanoleafAPI = {
     return store.store; // returns whole store as an object
   },
 
+  // Flash the lights of the Nanoleaf to identify the device
+  setIdentifyEffect: async function setIdentifyEffect(event, ip) {
+    const token = store.get(ip);
+
+    return new Promise((resolve, reject) => {
+      axios({
+        method: 'put',
+        url: `http://${ip}:${NANOLEAF_DEFAULT_PORT}/api/v1/${token}/identify`,
+        timeout: 30000,
+      }).then(response => {
+        resolve();
+      }).catch(error => {
+        reject(error);
+      });
+    });
+  },
+
   // Set the weather effect with given temperature, wind speed and rain/snow volume
   setWeatherEffect: async function setWeatherEffect(ip, temperature, windSpeed, rainVolume, snowVolume) {
     console.log("ip: " + ip);

@@ -49,6 +49,7 @@ app.whenReady().then(() => {
   ipcMain.handle('findDevices', nanoleafAPI.handleFindDevices);
   ipcMain.handle('authenticationToken', nanoleafAPI.handleAuthenticationToken);
   ipcMain.handle('getTokens', nanoleafAPI.handleGetTokens);
+  ipcMain.handle('setIdentifyEffect', nanoleafAPI.setIdentifyEffect);
   ipcMain.handle('weatherEffect', handleWeatherEffect);
   createWindow();
 });

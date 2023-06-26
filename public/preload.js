@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('nanoleafAPI', {
   findDevices: () => ipcRenderer.invoke('findDevices'),
   authenticationToken: (ip) => ipcRenderer.invoke('authenticationToken', ip),
   getTokens: () => ipcRenderer.invoke('getTokens'),
+  setIdentifyEffect: (ip) => ipcRenderer.invoke('setIdentifyEffect', ip),
   setWeatherEffect: (ip, city) => ipcRenderer.invoke('weatherEffect', ip, city)
 });
