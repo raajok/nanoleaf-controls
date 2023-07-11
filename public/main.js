@@ -9,7 +9,7 @@ function handleWeatherEffect(event, ip, city) {
   // Get weather information of the city from nanoleaf-controls-api server
   axios.get(`http://localhost:3001/weatherapi/${city}`)
     .then(result => {
-      console.log(result.data);
+      // console.log(result.data);
 
       let temperature = result.data.main.temp;
       let windSpeed = result.data.wind.speed;
@@ -19,7 +19,7 @@ function handleWeatherEffect(event, ip, city) {
 
       nanoleafAPI.setWeatherEffect(ip, temperature, windSpeed, rainVolume, snowVolume)
         .then(response => {
-          console.log(response);
+          // console.log(response);
         }).catch(error => {
           console.log(error);
         });
@@ -51,6 +51,7 @@ app.whenReady().then(() => {
   ipcMain.handle('getTokens', nanoleafAPI.handleGetTokens);
   ipcMain.handle('setIdentifyEffect', nanoleafAPI.setIdentifyEffect);
   ipcMain.handle('weatherEffect', handleWeatherEffect);
+
   createWindow();
 });
 

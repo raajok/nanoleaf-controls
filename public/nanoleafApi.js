@@ -2,8 +2,7 @@ const axios = require('axios');
 const find = require('local-devices');
 const Store = require('electron-store');
 
-// Set electron-store to not use dot notation, so IP-addresses are usable
-const store = new Store({accessPropertiesByDotNotation: false});
+const store = new Store({accessPropertiesByDotNotation: false}); // Set electron-store to not use dot notation, so IP-addresses are usable
 
 const NANOLEAF_DEFAULT_PORT = 16021;
 
@@ -99,52 +98,51 @@ const nanoleafAPI = {
 
   // Set the weather effect with given temperature, wind speed and rain/snow volume
   setWeatherEffect: async function setWeatherEffect(ip, temperature, windSpeed, rainVolume, snowVolume) {
-    console.log("ip: " + ip);
-    console.log("token: " + token);
-
     const token = store.get(ip);
     
-    /*
-      Color codes for temperature in HSB:
-      30+: 0, 100, 71
-      20+: 22, 100, 100
-      10+: 59, 100, 100
-      0+: 0, 0, 100
-      -7+: 180, 35, 100
-      -13+: 192, 75, 100
-      -18+:  215, 100, 100
-    */
     // Calculate color code with temperature
     let hue;
     let saturation;
     let brightness;
     if (temperature > 30) {
-      hue = 0;
-      saturation = 100;
-      brightness = 71;
-    } else if (temperature > 20) {
-      hue = 22;
-      saturation = 100;
+      hue = 3;
+      saturation = 99;
       brightness = 100;
+    } else if (temperature > 22) {
+      hue = 16;
+      saturation = 99;
+      brightness = 54;
+    }else if (temperature > 16) {
+      hue = 40;
+      saturation = 81;
+      brightness = 99;
     } else if (temperature > 10) {
-      hue = 59;
-      saturation = 100;
+      hue = 55;
+      saturation = 67;
       brightness = 100;
-    } else if (temperature > 0) {
+    } else if (temperature > 3) {
+      hue = 59;
+      saturation = 23;
+      brightness = 100;
+    } else if (temperature > -3) {
       hue = 0;
       saturation = 0;
       brightness = 100;
-    } else if (temperature > -7) {
-      hue = 180;
-      saturation = 35;
+    } else if (temperature > -8) {
+      hue = 179;
+      saturation = 20;
       brightness = 100;
     } else if (temperature > -13) {
-      hue = 192;
-      saturation = 75;
+      hue = 181;
+      saturation = 36;
       brightness = 100;
+    } else if (temperature > -18) {
+      hue = 190;
+      saturation = 51;
+      brightness = 99;
     } else {
-      hue = 215;
-      saturation = 100;
+      hue = 198;
+      saturation = 63;
       brightness = 100;
     }
 
@@ -165,27 +163,27 @@ const nanoleafAPI = {
     // calculate transTime (transition time of the flow animation) for nanoleaf with wind speed
     let transTime;
     if (windSpeed > 55) {
-      transTime = 0.2;
-    } else if (windSpeed > 47) {
-      transTime = 0.5;
-    } else if (windSpeed > 39) {
-      transTime = 0.8;
-    } else if (windSpeed > 32) {
-      transTime = 1.1;
-    } else if (windSpeed > 25) {
-      transTime = 1.4;
-    } else if (windSpeed > 19) {
-      transTime = 1.7;
-    } else if (windSpeed > 13) {
-      transTime = 2.0;
-    } else if (windSpeed > 8) {
-      transTime = 2.3;
-    } else if (windSpeed > 4) {
-      transTime = 2.6;
-    } else if (windSpeed > 1) {
-      transTime = 2.9;
-    } else {
       transTime = 5;
+    } else if (windSpeed > 47) {
+      transTime = 8;
+    } else if (windSpeed > 39) {
+      transTime = 11;
+    } else if (windSpeed > 32) {
+      transTime = 14;
+    } else if (windSpeed > 25) {
+      transTime = 17;
+    } else if (windSpeed > 19) {
+      transTime = 20;
+    } else if (windSpeed > 13) {
+      transTime = 23;
+    } else if (windSpeed > 8) {
+      transTime = 26;
+    } else if (windSpeed > 4) {
+      transTime = 29;
+    } else if (windSpeed > 1) {
+      transTime = 35;
+    } else {
+      transTime = 50;
     }
 
     return new Promise((resolve, reject) => {
@@ -201,7 +199,7 @@ const nanoleafAPI = {
               "value": true
             }, {
               "name": "transTime",
-              "value": 20
+              "value": transTime
             }, {
                     "name": "direction",
                     "value": "right"
@@ -216,15 +214,22 @@ const nanoleafAPI = {
               "saturation": saturation,
               "brightness": brightness
             }, {
-              "hue": hue <= 30 ? 0 : hue - 30,
-              "saturation": saturation <= 30 ? 0 : saturation - 30,
-              "brightness": brightness <= 30 ? 0 : saturation - 30
+              "hue": 0,
+              "saturation": 0,
+              "brightness": 100
             }]
           }
         }
+        /*
+          "hue": hue,
+              "saturation": saturation !== 0 ? saturation - 30 : saturation + 20,
+              "brightness": brightness
+        */
       }).then(response => {
+        // console.log(response);
         resolve(response.data);
       }).catch(error => {
+        console.log(error);
         reject(error);
       });
     });
